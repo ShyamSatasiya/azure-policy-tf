@@ -6,6 +6,7 @@ pipeline {
         ARM_CLIENT_SECRET = credentials('azure-client-secret')
         ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
         ARM_TENANT_ID = credentials('azure-tenant-id')
+        SONAR_TOKEN          = credentials('SONAR_TOKEN1')
     }
 
     stages {
