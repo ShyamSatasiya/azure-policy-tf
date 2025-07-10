@@ -12,17 +12,14 @@ pipeline {
     stages {
     
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    bat '''
-            sonar-scanner ^
-              -Dsonar.projectKey=azure-policy-tf ^
-              -Dsonar.host.url=http://localhost:9000 ^
-              -Dsonar.login=%SONAR_TOKEN%
+    steps {
+        withSonarQubeEnv('SonarQubeServer') {
+            bat '''
+            sonar-scanner -Dsonar.login=%SONAR_TOKEN%
             '''
-                }
-            }
         }
+    }
+}
 
         stage('Terraform Init') {
             steps {
