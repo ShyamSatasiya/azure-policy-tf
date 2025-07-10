@@ -4,7 +4,7 @@ pipeline {
   tools {
     // assumes you have configured these tool installations in Jenkins → Global Tool Configuration
     sonarScanner 'SonarQubeScanner'   
-    terraform    'terraform'          
+    terraform    'Terraform'          
   }
 
   environment {
