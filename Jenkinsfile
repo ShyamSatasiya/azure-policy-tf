@@ -12,8 +12,13 @@ pipeline {
     
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    bat 'sonar-scanner'
+                withSonarQubeEnv('SonarQubeServer') {
+                    bat '''
+                    sonar-scanner \
+                        -Dsonar.projectKey=azure-policy-tf \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=${SONAR_TOKEN}
+                    '''
                 }
             }
         }
