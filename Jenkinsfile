@@ -9,12 +9,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/ShyamSatasiya/azure-policy-tf.git', branch: 'master'
-            }
-        }
-
+    
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
