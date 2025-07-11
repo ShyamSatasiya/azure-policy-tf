@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    SONAR_TOKEN         = credentials('SONAR_TOKEN1')
+    SONAR_TOKEN         = credentials('sonar-token')
     ARM_CLIENT_ID       = credentials('azure-client-id')
     ARM_CLIENT_SECRET   = credentials('azure-client-secret')
     ARM_TENANT_ID       = credentials('azure-tenant-id')
@@ -10,43 +10,47 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/ShyamSatasiya/azure-policy-tf.git', branch: 'master'
-      }
-    }
 
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // SONAR_SCANNER_HOME is provided by the plugin
-          bat "%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
+          // will automatically read sonar-project.properties
+          bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN%'
         }
       }
     }
 
-    stage('Azure CLI Login') {
+    stage('Quality Gate') {
+      steps {
+        // requires Pipeline: SonarQube plugin
+        waitForQualityGate abortPipeline: true
+      }
+    }
+
+    stage('Azure Login') {
       steps {
         bat """
           az login --service-principal ^
             -u %ARM_CLIENT_ID% ^
             -p %ARM_CLIENT_SECRET% ^
             --tenant %ARM_TENANT_ID%
+          az account set --subscription %ARM_SUBSCRIPTION_ID%
         """
       }
     }
 
     stage('Terraform Init & Plan') {
       steps {
-        bat 'terraform init'
-        bat 'terraform plan -out=tfplan'
+        bat 'terraform init -input=false'
+        bat 'terraform plan -out=tfplan -input=false'
+        archiveArtifacts artifacts: 'tfplan', onlyIfSuccessful: true
       }
     }
 
-    stage('Terraform Apply') {
+    stage('Approve & Apply') {
       steps {
-        input message: 'Approve Policy Deployment?'
-        bat 'terraform apply tfplan'
+        input message: 'Apply Terraform changes to Azure?'
+        bat 'terraform apply -input=false tfplan'
       }
     }
   }
