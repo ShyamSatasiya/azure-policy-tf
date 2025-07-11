@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    SONAR_TOKEN         = credentials('SONAR_TOKEN1')
+    SONAR_TOKEN         = credentials('sonar-token')
     ARM_CLIENT_ID       = credentials('azure-client-id')
     ARM_CLIENT_SECRET   = credentials('azure-client-secret')
     ARM_TENANT_ID       = credentials('azure-tenant-id')
