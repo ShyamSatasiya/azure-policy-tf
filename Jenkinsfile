@@ -1,9 +1,6 @@
 pipeline {
   agent any
-tools {
-  // tool-type must be SonarRunnerInstallation
-  hudson.plugins.sonar.SonarRunnerInstallation 'sonar-scanner'
-}
+
   environment {
     SONAR_TOKEN         = credentials('sonar-token')
     ARM_CLIENT_ID       = credentials('azure-client-id')
@@ -15,12 +12,21 @@ tools {
   stages {
 
     stage('SonarQube Analysis') {
-  steps {
-    withSonarQubeEnv('SonarQubeServer') {
-      bat '%SONAR_RUNNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%'
+      steps {
+        withSonarQubeEnv('SonarQubeServer') {
+          // Run the official SonarScanner CLI image
+          bat """
+            docker run --rm ^
+              -v %WORKSPACE%:/usr/src ^
+              -e SONAR_LOGIN=%SONAR_TOKEN% ^
+              sonarsource/sonar-scanner-cli ^
+              -Dsonar.login=$SONAR_LOGIN ^
+              -Dsonar.projectKey=azure-policy-tf ^
+              -Dsonar.sources=/usr/src
+          """
+        }
+      }
     }
-  }
-}
 
     stage('Azure Login') {
       steps {
