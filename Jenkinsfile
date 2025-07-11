@@ -19,9 +19,11 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // Now calls the locally installed CLI on the PATH
-          bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=azure-policy-tf -Dsonar.sources=. -Dsonar.inclusions=*.tf,policies/**/*.json'
-        }
+  // SONAR_HOST_URL is now set
+  bat """
+    set SONAR_SCANNER_OPTS=-Dsonar.host.url=%SONAR_HOST_URL%
+    sonar-scanner -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=azure-policy-tf -Dsonar.sources=. -Dsonar.inclusions=*.tf,policies/**/*.json
+  """
       }
     }
 
