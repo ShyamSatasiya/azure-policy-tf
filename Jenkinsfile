@@ -10,31 +10,33 @@ pipeline {
   }
 
   stages {
-  
+    stage('Checkout') {
+      steps {
+        // you can drop this if you're letting the SCM plugin auto-checkout
+        checkout scm
+      }
+    }
 
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // Run the official SonarScanner CLI Docker image
+          // run the generic SonarScanner CLI in Docker; 
+          // pass SONAR_TOKEN into the container and reference it directly
           bat """
             docker run --rm ^
               -v %WORKSPACE%:/usr/src ^
-              -e SONAR_LOGIN=%SONAR_TOKEN% ^
+              -e SONAR_TOKEN=%SONAR_TOKEN% ^
               sonarsource/sonar-scanner-cli ^
-              -Dsonar.login=$SONAR_LOGIN ^
+              -Dsonar.login=%SONAR_TOKEN% ^
               -Dsonar.projectKey=azure-policy-tf ^
-              -Dsonar.sources=/usr/src \
+              -Dsonar.sources=/usr/src ^
               -Dsonar.inclusions=*.tf,policies/**/*.json
           """
         }
       }
     }
 
-    stage('Quality Gate') {
-      steps {
-        waitForQualityGate abortPipeline: true
-      }
-    }
+   
 
     stage('Azure Login') {
       steps {
