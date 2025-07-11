@@ -1,8 +1,13 @@
 pipeline {
   agent any
 
+  tools {
+    // Must match the “Name” field in Manage Jenkins → Global Tool Configuration
+    sonar      'sonar-scanner'
+  }
+
   environment {
-    SONAR_TOKEN         = credentials('sonar-token')
+    SONAR_TOKEN         = credentials('SONAR_TOKEN1')
     ARM_CLIENT_ID       = credentials('azure-client-id')
     ARM_CLIENT_SECRET   = credentials('azure-client-secret')
     ARM_TENANT_ID       = credentials('azure-tenant-id')
@@ -13,13 +18,8 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          script {
-            // resolve the full path to your SonarQubeScanner installation
-          
-
-            // invoke the .bat directly from the installation's bin folder
-           bat "\"%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat\" -Dsonar.login=%SONAR_TOKEN%"
-          }
+          // SONAR_SCANNER_HOME is injected by the plugin + tools block
+          bat "%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
         }
       }
     }
