@@ -10,11 +10,7 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/your-org/azure-policy-tf.git', branch: 'master'
-      }
-    }
+   
 
     stage('Install SonarScanner') {
       steps {
