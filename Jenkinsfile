@@ -10,30 +10,45 @@ pipeline {
   }
 
   stages {
-   
-
-    stage('Install SonarScanner') {
+    stage('Checkout') {
       steps {
-        // Installs the dotnet-sonarscanner tool if it isn't already
-        bat 'dotnet tool install --global dotnet-sonarscanner || exit 0'
+        git url: 'https://github.com/your-org/azure-policy-tf.git', branch: 'master'
       }
     }
 
-    stage('SonarQube Begin') {
+    stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          bat '''
-            REM Add the global tool path to PATH
-            set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
-
-            REM Kick off Sonar analysis
-            dotnet sonarscanner begin ^
-              /k:"azure-policy-tf" ^
-              /d:sonar.login=%SONAR_TOKEN% ^
-              /d:sonar.sources="." ^
-              /d:sonar.inclusions="*.tf,policies/**/*.json"
-          '''
+          // Run the official SonarScanner CLI Docker image
+          bat """
+            docker run --rm ^
+              -v %WORKSPACE%:/usr/src ^
+              -e SONAR_LOGIN=%SONAR_TOKEN% ^
+              sonarsource/sonar-scanner-cli ^
+              -Dsonar.login=$SONAR_LOGIN ^
+              -Dsonar.projectKey=azure-policy-tf ^
+              -Dsonar.sources=/usr/src \
+              -Dsonar.inclusions=*.tf,policies/**/*.json
+          """
         }
+      }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        waitForQualityGate abortPipeline: true
+      }
+    }
+
+    stage('Azure Login') {
+      steps {
+        bat """
+          az login --service-principal ^
+            -u %ARM_CLIENT_ID% ^
+            -p %ARM_CLIENT_SECRET% ^
+            --tenant %ARM_TENANT_ID%
+          az account set --subscription %ARM_SUBSCRIPTION_ID%
+        """
       }
     }
 
@@ -49,15 +64,6 @@ pipeline {
       steps {
         input message: 'Apply Terraform changes to Azure?'
         bat 'terraform apply -input=false tfplan'
-      }
-    }
-
-    stage('SonarQube End') {
-      steps {
-        bat '''
-          set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
-          dotnet sonarscanner end /d:sonar.login=%SONAR_TOKEN%
-        '''
       }
     }
   }
