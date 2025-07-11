@@ -1,20 +1,14 @@
 pipeline {
   agent any
 
-  tools {
-    // assumes you have configured these tool installations in Jenkins → Global Tool Configuration
-    sonarScanner 'SonarQubeScanner'   
-    terraform    'Terraform'          
-  }
+ 
 
   environment {
-    // sonar-token1 is your SonarQube auth token credential ID
-    SONAR_TOKEN        = credentials('SONAR_TOKEN1') 
-    // these three can come from a single SPN credential if you like
-    ARM_CLIENT_ID      = credentials('azure-client-id')
-    ARM_CLIENT_SECRET  = credentials('azure-client-secret')
-    ARM_TENANT_ID      = credentials('azure-tenant-id')
-    ARM_SUBSCRIPTION_ID= credentials('azure-subscription-id')
+    SONAR_TOKEN         = credentials('SONAR_TOKEN1')
+    ARM_CLIENT_ID       = credentials('azure-client-id')
+    ARM_CLIENT_SECRET   = credentials('azure-client-secret')
+    ARM_TENANT_ID       = credentials('azure-tenant-id')
+    ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
   }
 
   stages {
@@ -27,7 +21,7 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // sonar-scanner is now on PATH via the `tools` block
+          // 'sonar-scanner' is on PATH thanks to tools { sonar ... }
           bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN%'
         }
       }
@@ -35,11 +29,10 @@ pipeline {
 
     stage('Azure CLI Login') {
       steps {
-        // log in so Terraform can query/validate providers
         bat """
-          az login --service-principal \\
-            -u %ARM_CLIENT_ID% \\
-            -p %ARM_CLIENT_SECRET% \\
+          az login --service-principal ^
+            -u %ARM_CLIENT_ID% ^
+            -p %ARM_CLIENT_SECRET% ^
             --tenant %ARM_TENANT_ID%
         """
       }
