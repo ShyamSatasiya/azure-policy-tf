@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    SONAR_TOKEN         = credentials('sonar-token')
+    SONAR_TOKEN         = credentials('SONAR_TOKEN1')
     ARM_CLIENT_ID       = credentials('azure-client-id')
     ARM_CLIENT_SECRET   = credentials('azure-client-secret')
     ARM_TENANT_ID       = credentials('azure-tenant-id')
@@ -10,27 +10,34 @@ pipeline {
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/your-org/azure-policy-tf.git', branch: 'master'
+      }
+    }
+
+    stage('Install SonarScanner') {
+      steps {
+        // Installs the dotnet-sonarscanner tool if it isn't already
+        bat 'dotnet tool install --global dotnet-sonarscanner || exit 0'
+      }
+    }
 
     stage('SonarQube Begin') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') { 
-                    bat '''
-                        set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
-                        dotnet sonarscanner begin /k:"demo-sonarproject" /d:sonar.host.url="http://localhost:9000" /d:sonar.token=%SONAR_TOKEN%
-                    '''
-                }
-            }
-        }
-
-    stage('Azure Login') {
       steps {
-        bat """
-          az login --service-principal ^
-            -u %ARM_CLIENT_ID% ^
-            -p %ARM_CLIENT_SECRET% ^
-            --tenant %ARM_TENANT_ID%
-          az account set --subscription %ARM_SUBSCRIPTION_ID%
-        """
+        withSonarQubeEnv('SonarQubeServer') {
+          bat '''
+            REM Add the global tool path to PATH
+            set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
+
+            REM Kick off Sonar analysis
+            dotnet sonarscanner begin ^
+              /k:"azure-policy-tf" ^
+              /d:sonar.login=%SONAR_TOKEN% ^
+              /d:sonar.sources="." ^
+              /d:sonar.inclusions="*.tf,policies/**/*.json"
+          '''
+        }
       }
     }
 
@@ -48,15 +55,20 @@ pipeline {
         bat 'terraform apply -input=false tfplan'
       }
     }
+
+    stage('SonarQube End') {
+      steps {
+        bat '''
+          set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
+          dotnet sonarscanner end /d:sonar.login=%SONAR_TOKEN%
+        '''
+      }
+    }
   }
 
-  stage('SonarQube End') {
-            steps {
-                bat '''
-                    set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
-                    dotnet sonarscanner end /d:sonar.token=%SONAR_TOKEN%
-                '''
-            }
-        }
-    
+  post {
+    always {
+      cleanWs()
+    }
+  }
 }
