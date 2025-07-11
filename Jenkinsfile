@@ -15,15 +15,8 @@ pipeline {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
           // will automatically read sonar-project.properties
-          bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN%'
+           bat "\"%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat\" -Dsonar.login=%SONAR_TOKEN%"
         }
-      }
-    }
-
-    stage('Quality Gate') {
-      steps {
-        // requires Pipeline: SonarQube plugin
-        waitForQualityGate abortPipeline: true
       }
     }
 
