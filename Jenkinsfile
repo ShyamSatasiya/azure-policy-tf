@@ -1,12 +1,6 @@
 pipeline {
   agent any
 
-  tools {
-    // <-- this must match the "Name" in your Global Tool Config
-    sonarRunner 'sonar-scanner'
-    terraform    'terraform'
-  }
-
   environment {
     SONAR_TOKEN         = credentials('SONAR_TOKEN1')
     ARM_CLIENT_ID       = credentials('azure-client-id')
@@ -16,11 +10,17 @@ pipeline {
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/ShyamSatasiya/azure-policy-tf.git', branch: 'master'
+      }
+    }
+
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // now SONAR_RUNNER_HOME is set by the tools block
-          bat "%SONAR_RUNNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
+          // SONAR_SCANNER_HOME is provided by the plugin
+          bat "%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
         }
       }
     }
