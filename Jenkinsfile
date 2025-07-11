@@ -15,10 +15,10 @@ pipeline {
         withSonarQubeEnv('SonarQubeServer') {
           script {
             // resolve the full path to your SonarQubeScanner installation
-            def scannerHome = tool 'SonarQubeScanner'
+          
 
             // invoke the .bat directly from the installation's bin folder
-            bat "\"${scannerHome}\\bin\\sonar-scanner.bat\" -Dsonar.login=%SONAR_TOKEN%"
+           bat "\"%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat\" -Dsonar.login=%SONAR_TOKEN%"
           }
         }
       }
