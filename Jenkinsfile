@@ -2,8 +2,9 @@ pipeline {
   agent any
 
   tools {
-    // Must match the “Name” field in Manage Jenkins → Global Tool Configuration
-    sonar      'sonar-scanner'
+    // <-- this must match the "Name" in your Global Tool Config
+    sonarRunner 'sonar-scanner'
+    terraform    'terraform'
   }
 
   environment {
@@ -18,8 +19,8 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // SONAR_SCANNER_HOME is injected by the plugin + tools block
-          bat "%SONAR_SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
+          // now SONAR_RUNNER_HOME is set by the tools block
+          bat "%SONAR_RUNNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%"
         }
       }
     }
