@@ -18,7 +18,8 @@ pipeline {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
           // 'sonar-scanner' is on PATH thanks to tools { sonar ... }
-          bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN%'
+    
+           bat '%SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%'
         }
       }
     }
