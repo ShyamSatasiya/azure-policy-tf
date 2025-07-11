@@ -12,11 +12,7 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/ShyamSatasiya/CI-CD-azure-DevOps-with-different-environments.git', branch: 'master'
-      }
-    }
+   
 
     stage('SonarQube Analysis') {
       steps {
