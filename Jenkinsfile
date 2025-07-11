@@ -11,22 +11,16 @@ pipeline {
 
   stages {
 
-    stage('SonarQube Analysis') {
-      steps {
-        withSonarQubeEnv('SonarQubeServer') {
-          // Run the official SonarScanner CLI image
-          bat """
-            docker run --rm ^
-              -v %WORKSPACE%:/usr/src ^
-              -e SONAR_LOGIN=%SONAR_TOKEN% ^
-              sonarsource/sonar-scanner-cli ^
-              -Dsonar.login=$SONAR_LOGIN ^
-              -Dsonar.projectKey=azure-policy-tf ^
-              -Dsonar.sources=/usr/src
-          """
+    stage('SonarQube Begin') {
+            steps {
+                withSonarQubeEnv('SonarQubeServer') { 
+                    bat '''
+                        set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
+                        dotnet sonarscanner begin /k:"demo-sonarproject" /d:sonar.host.url="http://localhost:9000" /d:sonar.token=%SONAR_TOKEN%
+                    '''
+                }
+            }
         }
-      }
-    }
 
     stage('Azure Login') {
       steps {
@@ -56,9 +50,13 @@ pipeline {
     }
   }
 
-  post {
-    always {
-      cleanWs()
-    }
-  }
+  stage('SonarQube End') {
+            steps {
+                bat '''
+                    set PATH=%PATH%;C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools
+                    dotnet sonarscanner end /d:sonar.token=%SONAR_TOKEN%
+                '''
+            }
+        }
+    
 }
