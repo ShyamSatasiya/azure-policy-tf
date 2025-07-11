@@ -12,7 +12,6 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        // you can drop this if you're letting the SCM plugin auto-checkout
         checkout scm
       }
     }
@@ -20,18 +19,8 @@ pipeline {
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // run the generic SonarScanner CLI in Docker; 
-          // pass SONAR_TOKEN into the container and reference it directly
-          bat """
-            docker run --rm ^
-              -v %WORKSPACE%:/usr/src ^
-              -e SONAR_TOKEN=%SONAR_TOKEN% ^
-              sonarsource/sonar-scanner-cli ^
-              -Dsonar.login=%SONAR_TOKEN% ^
-              -Dsonar.projectKey=azure-policy-tf ^
-              -Dsonar.sources=/usr/src ^
-              -Dsonar.inclusions=*.tf,policies/**/*.json
-          """
+          // Now calls the locally installed CLI on the PATH
+          bat 'sonar-scanner -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=azure-policy-tf -Dsonar.sources=. -Dsonar.inclusions=*.tf,policies/**/*.json'
         }
       }
     }
