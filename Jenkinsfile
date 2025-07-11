@@ -1,8 +1,6 @@
 pipeline {
   agent any
 
- 
-
   environment {
     SONAR_TOKEN         = credentials('SONAR_TOKEN1')
     ARM_CLIENT_ID       = credentials('azure-client-id')
@@ -12,14 +10,16 @@ pipeline {
   }
 
   stages {
-   
-
     stage('SonarQube Analysis') {
       steps {
         withSonarQubeEnv('SonarQubeServer') {
-          // 'sonar-scanner' is on PATH thanks to tools { sonar ... }
-    
-           bat '%SCANNER_HOME%\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN%'
+          script {
+            // resolve the full path to your SonarQubeScanner installation
+            def scannerHome = tool 'SonarQubeScanner'
+
+            // invoke the .bat directly from the installation's bin folder
+            bat "\"${scannerHome}\\bin\\sonar-scanner.bat\" -Dsonar.login=%SONAR_TOKEN%"
+          }
         }
       }
     }
